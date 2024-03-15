@@ -185,6 +185,23 @@ class Employee:
         row = CURSOR.execute(sql, (name,)).fetchone()
         return cls.instance_from_db(row) if row else None
 
+        
     def reviews(self):
-        """Return list of reviews associated with current employee"""
-        pass
+        # Import the Review class within the method to avoid circular imports
+        from review import Review
+
+        # Query the "reviews" table to get all rows where employee_id matches the id of the current Employee instance
+        sql = """
+            SELECT * FROM reviews
+            WHERE employee_id = ?
+        """
+        CURSOR.execute(sql, (self.id,))
+        rows = CURSOR.fetchall()
+
+        # Create Review instances for each matching table row
+        reviews = []
+        for row in rows:
+            review = Review.instance_from_db(row)
+            reviews.append(review)
+
+        return reviews

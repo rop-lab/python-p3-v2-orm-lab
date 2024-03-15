@@ -3,6 +3,7 @@ from department import Department
 from employee import Employee
 
 
+
 class Review:
 
     # Dictionary of objects saved to the database.
@@ -10,12 +11,53 @@ class Review:
 
     def __init__(self, year, summary, employee_id, id=None):
         self.id = id
-        self.year = year
+        self._year = None  # Initialize _year attribute
+        self._summary = None
+        self._employee_id = None
+        self.year = year  # Use property setter to set year
         self.summary = summary
         self.employee_id = employee_id
 
+    @property
+    def year(self):
+        return self._year
+    
+    @year.setter
+    def year(self, value):
+        if isinstance(value, int) and value >= 2000:
+            self._year = value
+        else:
+            raise  ValueError("Year must be an integer greater than  or equal to 2000.")
+
+    @property
+    def summary(self):
+        return self._summary
+    
+    @summary.setter
+    def summary(self, value):
+        if isinstance(value, str) and len(value) > 0:
+            self._summary = value
+        else:
+            raise ValueError("Summary should be a non-empty string")
+
+    @property
+    def employee_id(self):
+        return self._employee_id
+
+    @employee_id.setter
+    def employee_id(self, value):
+        if isinstance(value, int) and Employee.find_by_id(value): 
+            self._employee_id = value
+        else:
+            raise ValueError("Employee_id should be the id of an existing Employee instance.")
+
+
     def save(self):
         """Insert a new row into the 'reviews' table and update object attributes."""
+        print("Employee ID:", self.employee_id)
+        if not Employee.find_by_id(self.employee_id):
+            raise ValueError("Employee with provided ID does not exist in the database.")
+
         sql = """
             INSERT INTO reviews (year, summary, employee_id)
             VALUES (?, ?, ?)
@@ -31,9 +73,9 @@ class Review:
 
     @classmethod
     def create(cls, year, summary, employee_id):
-        """Create a new Review instance, save it to the 'review' table, and return the new instance."""
+        """Create a new Review instance, save it to the database, and return the new instance."""
         review = cls(year, summary, employee_id)
-        review.save()
+        review.save()  # Assuming save method persists the Review instance to the database
         return review
     
     @classmethod
@@ -113,11 +155,11 @@ class Review:
         """Create a new table to persist the attributes of Review instances."""
         sql = """
             CREATE TABLE IF NOT EXISTS reviews (
-            id INTEGER PRIMARY KEY,
-            year INT,
-            summary TEXT,
-            employee_id INTEGER,
-            FOREIGN KEY (employee_id) REFERENCES employees(id)
+                id INTEGER PRIMARY KEY,
+                year INT,
+                summary TEXT,
+                employee_id INTEGER,
+                FOREIGN KEY (employee_id) REFERENCES employees(id)
             )
         """
         CURSOR.execute(sql)
